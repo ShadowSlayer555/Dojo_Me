@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import * as Icons from 'lucide-react';
-import { Plus, LayoutTemplate, FileText, Tag, Search, Trash2, Video, Image as ImageIcon, Palette } from 'lucide-react';
+import { Plus, LayoutTemplate, FileText, Tag, Search, Trash2, Video, Image as ImageIcon, Palette, X } from 'lucide-react';
 import { SiteConfig, TabData, CardData } from './types';
 import { FakeBrowser } from './components/FakeBrowser';
 import { PublishSidebar } from './components/PublishSidebar';
@@ -452,19 +452,58 @@ export default function App() {
                         />
 
                         {/* Tags Input */}
-                        <div className="flex items-center gap-2 border-t border-gray-100 pt-4">
-                          <Tag className="w-4 h-4 opacity-50" />
-                          <input
-                            type="text"
-                            value={card.tags.join(', ')}
-                            onChange={(e) => {
-                              const tagsArray = e.target.value.split(',').map(t => t.trim()).filter(t => t);
-                              handleUpdateCard(activeTab.id, card.id, { tags: tagsArray });
-                            }}
-                            placeholder="Add tags (comma separated)"
-                            className="bg-transparent border-none outline-none text-xs w-full opacity-70 focus:opacity-100"
-                            style={{ color: config.theme.textColor }}
-                          />
+                        <div className="border-t border-gray-100 pt-4 space-y-3">
+                          {/* Existing Tags */}
+                          {card.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {card.tags.map(tag => (
+                                <span key={tag} className="flex items-center gap-1 text-xs px-2 py-1 bg-black/5 rounded-md border border-gray-200">
+                                  #{tag}
+                                  <button
+                                    onClick={() => handleUpdateCard(activeTab.id, card.id, { tags: card.tags.filter(t => t !== tag) })}
+                                    className="hover:text-red-500 transition-colors"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Add New Tag */}
+                          <div className="flex items-center gap-2">
+                            <Tag className="w-4 h-4 opacity-50" />
+                            <input
+                              type="text"
+                              placeholder="Type a tag and press Enter..."
+                              className="bg-transparent border-none outline-none text-xs w-full opacity-70 focus:opacity-100"
+                              style={{ color: config.theme.textColor }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  const newTag = e.currentTarget.value.trim();
+                                  if (newTag && !card.tags.includes(newTag)) {
+                                    handleUpdateCard(activeTab.id, card.id, { tags: [...card.tags, newTag] });
+                                    e.currentTarget.value = '';
+                                  }
+                                }
+                              }}
+                            />
+                            <button
+                              onClick={(e) => {
+                                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                                const newTag = input.value.trim();
+                                if (newTag && !card.tags.includes(newTag)) {
+                                  handleUpdateCard(activeTab.id, card.id, { tags: [...card.tags, newTag] });
+                                  input.value = '';
+                                }
+                              }}
+                              className="text-xs bg-black/5 hover:bg-black/10 px-2 py-1 rounded font-medium transition-colors whitespace-nowrap"
+                              style={{ color: config.theme.textColor }}
+                            >
+                              Add Tag
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>

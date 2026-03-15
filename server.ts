@@ -1,6 +1,7 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
+import { createClient } from '@libsql/client';
 
 async function startServer() {
   const app = express();
@@ -26,12 +27,12 @@ async function startServer() {
       
       if (tursoUrl && tursoToken) {
         console.log(`[Backend] Saving site ${siteId} to Turso...`);
-        // Example Turso LibSQL call (you would install @libsql/client):
-        // const client = createClient({ url: tursoUrl, authToken: tursoToken });
-        // await client.execute({
-        //   sql: "INSERT INTO websites (id, email, config_json) VALUES (?, ?, ?)",
-        //   args: [siteId, email, JSON.stringify(config)]
-        // });
+        const client = createClient({ url: tursoUrl, authToken: tursoToken });
+        await client.execute({
+          sql: "INSERT INTO websites (id, email, config_json) VALUES (?, ?, ?)",
+          args: [siteId, email, JSON.stringify(config)]
+        });
+        console.log(`[Backend] Successfully saved to Turso.`);
       } else {
         console.log(`[Backend] TURSO credentials missing. Simulating save for ${siteId}...`);
       }
@@ -46,22 +47,28 @@ async function startServer() {
 
       if (emailjsServiceId && emailjsTemplateId) {
         console.log(`[Backend] Sending notification email to admin via EmailJS...`);
-        // Example EmailJS REST API call:
-        // await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify({
-        //     service_id: emailjsServiceId,
-        //     template_id: emailjsTemplateId,
-        //     user_id: emailjsPublicKey,
-        //     accessToken: emailjsPrivateKey,
-        //     template_params: {
-        //       user_email: email,
-        //       db_id: siteId,
-        //       existing_url: existingUrl || 'None'
-        //     }
-        //   })
-        // });
+        const emailResponse = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            service_id: emailjsServiceId,
+            template_id: emailjsTemplateId,
+            user_id: emailjsPublicKey,
+            accessToken: emailjsPrivateKey,
+            template_params: {
+              user_email: email,
+              db_id: siteId,
+              existing_url: existingUrl || 'None'
+            }
+          })
+        });
+        
+        if (!emailResponse.ok) {
+          const errText = await emailResponse.text();
+          console.error(`[Backend] EmailJS Error:`, errText);
+        } else {
+          console.log(`[Backend] Successfully sent email via EmailJS.`);
+        }
       } else {
         console.log(`[Backend] EMAILJS credentials missing. Simulating email send...`);
       }
