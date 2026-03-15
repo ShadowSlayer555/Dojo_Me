@@ -81,11 +81,17 @@ async function startServer() {
 
       // Send email
       try {
-        if (process.env.EMAILJS_SERVICE_ID && process.env.EMAILJS_TEMPLATE_ID && process.env.EMAILJS_PUBLIC_KEY && process.env.EMAILJS_PRIVATE_KEY) {
+        if (process.env.EMAILJS_SERVICE_ID && process.env.EMAILJS_2FA_TEMPLATE_ID && process.env.EMAILJS_PUBLIC_KEY && process.env.EMAILJS_PRIVATE_KEY) {
           await emailjs.send(
             process.env.EMAILJS_SERVICE_ID,
-            process.env.EMAILJS_TEMPLATE_ID,
-            { to_email: email, code: code },
+            process.env.EMAILJS_2FA_TEMPLATE_ID,
+            { 
+              to_email: email, 
+              code: code,
+              app: 'Dojo Me',
+              name: username,
+              email: email
+            },
             { publicKey: process.env.EMAILJS_PUBLIC_KEY, privateKey: process.env.EMAILJS_PRIVATE_KEY }
           );
         } else {
@@ -132,11 +138,17 @@ async function startServer() {
       });
 
       try {
-        if (process.env.EMAILJS_SERVICE_ID && process.env.EMAILJS_TEMPLATE_ID && process.env.EMAILJS_PUBLIC_KEY && process.env.EMAILJS_PRIVATE_KEY) {
+        if (process.env.EMAILJS_SERVICE_ID && process.env.EMAILJS_2FA_TEMPLATE_ID && process.env.EMAILJS_PUBLIC_KEY && process.env.EMAILJS_PRIVATE_KEY) {
           await emailjs.send(
             process.env.EMAILJS_SERVICE_ID,
-            process.env.EMAILJS_TEMPLATE_ID,
-            { to_email: email, code: code },
+            process.env.EMAILJS_2FA_TEMPLATE_ID,
+            { 
+              to_email: email, 
+              code: code,
+              app: 'Dojo Me',
+              name: user.username,
+              email: email
+            },
             { publicKey: process.env.EMAILJS_PUBLIC_KEY, privateKey: process.env.EMAILJS_PRIVATE_KEY }
           );
         } else {
