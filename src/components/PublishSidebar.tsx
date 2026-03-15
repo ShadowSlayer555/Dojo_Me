@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Send } from 'lucide-react';
-import umbraLogo from '../assets/umbra-atelier-logo.png';
 
 interface PublishSidebarProps {
   isOpen: boolean;
@@ -44,8 +43,8 @@ export function PublishSidebar({ isOpen, onClose, onSubmit }: PublishSidebarProp
 
             <div className="p-6 flex-1 overflow-y-auto">
               <div className="flex flex-col items-center mb-8 text-center">
-                <div className="w-24 h-24 bg-slate-100 rounded-full mb-4 overflow-hidden border-4 border-slate-200 flex items-center justify-center">
-                  <img src={umbraLogo} alt="Umbra Atelier" className="w-full h-full object-cover" />
+                <div className="w-24 h-24 bg-slate-900 rounded-full mb-4 overflow-hidden border-4 border-slate-800 flex items-center justify-center">
+                  <img src="/umbra-atelier-logo.png" alt="Umbra Atelier" className="w-full h-full object-cover" />
                 </div>
                 <h3 className="text-lg font-bold text-slate-800">Umbra Atelier</h3>
                 <p className="text-sm text-emerald-600 font-medium mt-1">We should respond by email as soon as possible!</p>
