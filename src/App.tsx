@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import * as Icons from 'lucide-react';
-import { Plus, LayoutTemplate, FileText, Tag, Search, Trash2, Video, Image as ImageIcon, Palette, X } from 'lucide-react';
+import { Plus, LayoutTemplate, FileText, Tag, Search, Trash2, Video, Image as ImageIcon, Palette, X, User, LogOut, Settings } from 'lucide-react';
 import { SiteConfig, TabData, CardData } from './types';
 import { FakeBrowser } from './components/FakeBrowser';
 import { PublishSidebar } from './components/PublishSidebar';
+import { Auth } from './components/Auth';
+import { ProfileSettings } from './components/ProfileSettings';
+import { fetchApi } from './lib/api';
 
 // Helper to render dynamic Lucide icons
 const DynamicIcon = ({ name, className }: { name: string; className?: string }) => {
@@ -13,10 +16,15 @@ const DynamicIcon = ({ name, className }: { name: string; className?: string }) 
 };
 
 export default function App() {
+  const [user, setUser] = useState<any>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showProfileSettings, setShowProfileSettings] = useState(false);
+
   const [config, setConfig] = useState<SiteConfig>({
     browserTitle: 'My Dojo',
     favicon: '',
-    heroTitle: 'Shito-Ryu Karate Portal',
+    heroTitle: 'Dojo Portal',
     heroDescription: 'Welcome to our dojo. Learn discipline, respect, and self-defense.',
     heroImage: '',
     theme: {
@@ -35,6 +43,64 @@ export default function App() {
 
   const heroImageInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const userData = await fetchApi('/api/auth/me');
+        setUser(userData);
+        await loadUserConfig();
+      } catch (err) {
+        setUser(null);
+      } finally {
+        setIsAuthLoading(false);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  const loadUserConfig = async () => {
+    try {
+      const data = await fetchApi('/api/config/me');
+      if (data.config) {
+        setConfig(data.config);
+        if (data.config.tabs.length > 0) {
+          setActiveTabId(data.config.tabs[0].id);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load config', err);
+    }
+  };
+
+  const handleLogin = async (userData: any) => {
+    setUser(userData);
+    await loadUserConfig();
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetchApi('/api/auth/logout', { method: 'POST' });
+      setUser(null);
+      setConfig({
+        browserTitle: 'My Dojo',
+        favicon: '',
+        heroTitle: 'Dojo Portal',
+        heroDescription: 'Welcome to our dojo. Learn discipline, respect, and self-defense.',
+        heroImage: '',
+        theme: {
+          primaryColor: '#10b981',
+          backgroundColor: '#f9fafb',
+          cardColor: '#ffffff',
+          textColor: '#1f2937'
+        },
+        tabs: [],
+      });
+      setActiveTabId(null);
+    } catch (err) {
+      console.error('Logout failed', err);
+    }
+  };
+
   // --- Gemini AI Integration for Icons ---
   const generateIconForTab = async (tabName: string, tabId: string) => {
     if (!tabName.trim()) return;
@@ -42,7 +108,7 @@ export default function App() {
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `You are an assistant that selects an appropriate icon for a karate dojo website tab.
+        contents: `You are an assistant that selects an appropriate icon for a dojo website tab.
         The tab is named: "${tabName}".
         Return ONLY the exact name of a Lucide React icon (PascalCase).
         Examples: Swords, User, Video, Info, Home, Shield, Award, BookOpen, Users.
@@ -101,6 +167,19 @@ export default function App() {
     }));
   };
 
+  const handleDeleteCard = (tabId: string, cardId: string) => {
+    setConfig(prev => ({
+      ...prev,
+      tabs: prev.tabs.map(t => {
+        if (t.id !== tabId) return t;
+        return {
+          ...t,
+          cards: t.cards.filter(c => c.id !== cardId)
+        };
+      })
+    }));
+  };
+
   const handleUpdateCard = (tabId: string, cardId: string, updates: Partial<CardData>) => {
     setConfig(prev => ({
       ...prev,
@@ -111,7 +190,8 @@ export default function App() {
           cards: t.cards.map(c => c.id === cardId ? { ...c, ...updates } : c)
         };
       })
-    }));
+    })
+    );
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, callback: (base64: string) => void) => {
@@ -125,12 +205,12 @@ export default function App() {
     }
   };
 
-  const handlePublishSubmit = async (email: string, existingUrl: string) => {
+  const handlePublishSubmit = async (existingUrl: string) => {
     try {
       const response = await fetch('/api/publish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, existingUrl, config })
+        body: JSON.stringify({ existingUrl, config })
       });
       const data = await response.json();
       if (data.success) {
@@ -144,6 +224,14 @@ export default function App() {
     }
     setIsPublishOpen(false);
   };
+
+  if (isAuthLoading) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500">Loading...</div>;
+  }
+
+  if (!user) {
+    return <Auth onLogin={handleLogin} />;
+  }
 
   // --- Render Helpers ---
   const activeTab = config.tabs.find(t => t.id === activeTabId);
@@ -188,12 +276,49 @@ export default function App() {
             <Palette className="w-4 h-4" /> Theme
           </button>
         </div>
-        <button 
-          onClick={() => setIsPublishOpen(true)}
-          className="bg-[#10b981] hover:bg-[#059669] text-white px-6 py-2 rounded-full font-bold shadow-md shadow-emerald-500/30 transition-all hover:scale-105"
-        >
-          Publish
-        </button>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setIsPublishOpen(true)}
+            className="bg-[#10b981] hover:bg-[#059669] text-white px-6 py-2 rounded-full font-bold shadow-md shadow-emerald-500/30 transition-all hover:scale-105"
+          >
+            Publish
+          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-200 overflow-hidden border-2 border-slate-300 hover:border-indigo-500 transition-colors"
+            >
+              {user.profile_picture ? (
+                <img src={user.profile_picture} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-5 h-5 text-slate-500" />
+              )}
+            </button>
+            {showProfileMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-2 z-50">
+                <div className="px-4 py-2 border-b border-slate-100 mb-2">
+                  <p className="text-sm font-medium text-slate-900 truncate">{user.username}</p>
+                  <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                </div>
+                <button 
+                  onClick={() => {
+                    setShowProfileSettings(true);
+                    setShowProfileMenu(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                >
+                  <Settings className="w-4 h-4" /> Profile Settings
+                </button>
+                <button 
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" /> Sign Out
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Theme Settings Panel */}
@@ -543,6 +668,13 @@ export default function App() {
         isOpen={isPublishOpen}
         onClose={() => setIsPublishOpen(false)}
         onSubmit={handlePublishSubmit}
+      />
+
+      <ProfileSettings 
+        isOpen={showProfileSettings}
+        onClose={() => setShowProfileSettings(false)}
+        user={user}
+        onUpdate={setUser}
       />
     </div>
   );

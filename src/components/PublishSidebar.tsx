@@ -5,17 +5,15 @@ import { X, Send } from 'lucide-react';
 interface PublishSidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (email: string, existingUrl: string) => void;
+  onSubmit: (existingUrl: string) => void;
 }
 
 export function PublishSidebar({ isOpen, onClose, onSubmit }: PublishSidebarProps) {
-  const [email, setEmail] = useState('');
   const [existingUrl, setExistingUrl] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
-    onSubmit(email, existingUrl);
+    onSubmit(existingUrl);
   };
 
   return (
@@ -44,25 +42,19 @@ export function PublishSidebar({ isOpen, onClose, onSubmit }: PublishSidebarProp
             </div>
 
             <div className="p-6 flex-1 overflow-y-auto">
-              <p className="text-sm text-gray-600 mb-8">
+              <div className="flex flex-col items-center mb-8 text-center">
+                <div className="w-24 h-24 bg-slate-100 rounded-full mb-4 overflow-hidden border-4 border-slate-200 flex items-center justify-center">
+                  <img src="https://api.dicebear.com/7.x/shapes/svg?seed=UmbraAtelier&backgroundColor=1e293b" alt="Umbra Atelier" className="w-full h-full object-cover" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-800">Umbra Atelier</h3>
+                <p className="text-sm text-emerald-600 font-medium mt-1">We should respond by email as soon as possible!</p>
+              </div>
+
+              <p className="text-sm text-gray-600 mb-8 text-center">
                 Request a website from the Umbra Atelier team. We will generate the repository and send you a link to publish it via GitHub Pages.
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Your Email Address <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                  />
-                </div>
-
                 <div className="pt-4 border-t border-gray-100">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Not your first time? Edit an existing website:

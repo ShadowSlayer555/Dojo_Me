@@ -178,9 +178,9 @@ function App() {
                 )}
 
                 {/* Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="columns-1 md:columns-2 lg:columns-3 gap-8 space-y-8">
                   {filteredCards.map(card => (
-                    <div key={card.id} className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all" style={{ backgroundColor: config.theme.cardColor }}>
+                    <div key={card.id} className="break-inside-avoid border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all" style={{ backgroundColor: config.theme.cardColor }}>
                       <div className="p-5 border-b border-gray-100 bg-black/5">
                         <h3 className="font-bold text-xl">{card.title}</h3>
                       </div>
