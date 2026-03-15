@@ -1,11 +1,32 @@
 const { useState, useEffect } = React;
 
 function App() {
-  const config = window.SITE_CONFIG;
-  const [activeTabId, setActiveTabId] = useState(config.tabs[0]?.id || null);
+  const [config, setConfig] = useState(null);
+  const [activeTabId, setActiveTabId] = useState(null);
   const [activeTagFilter, setActiveTagFilter] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Fetch the configuration from data.json
+    fetch('./data.json')
+      .then(response => {
+        if (!response.ok) throw new Error("Failed to load data.json");
+        return response.json();
+      })
+      .then(data => {
+        setConfig(data);
+        if (data.tabs && data.tabs.length > 0) {
+          setActiveTabId(data.tabs[0].id);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        setError(err.message);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!config) return;
     // Update document title and favicon
     if (config.browserTitle) document.title = config.browserTitle;
     if (config.favicon) {
@@ -22,8 +43,18 @@ function App() {
   }, [config]);
 
   useEffect(() => {
-    lucide.createIcons();
-  }, [activeTabId, activeTagFilter]);
+    if (config) {
+      lucide.createIcons();
+    }
+  }, [activeTabId, activeTagFilter, config]);
+
+  if (error) {
+    return <div className="p-8 text-red-500">Error: {error}. Please ensure data.json is formatted correctly.</div>;
+  }
+
+  if (!config) {
+    return <div className="p-8 text-gray-500">Loading website data...</div>;
+  }
 
   const activeTab = config.tabs.find(t => t.id === activeTabId);
   

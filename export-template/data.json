@@ -1,0 +1,14 @@
+{
+  "browserTitle": "My Awesome Dojo",
+  "favicon": "",
+  "heroTitle": "Welcome to our Dojo",
+  "heroDescription": "Learn discipline, respect, and self-defense.",
+  "heroImage": "",
+  "theme": {
+    "primaryColor": "#10b981",
+    "backgroundColor": "#f9fafb",
+    "cardColor": "#ffffff",
+    "textColor": "#1f2937"
+  },
+  "tabs": []
+}
